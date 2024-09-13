@@ -1,0 +1,37 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+processors:
+extensions:
+  health_check: {}
+exporters:
+  otlp:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+  prometheus:
+    endpoint: "0.0.0.0:9090"
+  prometheusremotewrite:
+    endpoint: http://localhost:9090/api/v1/write
+    target_info:
+      enabled: true
+    remote_write_queue:
+      enabled: True
+      queue_size: 100000
+      num_consumers: 5
+  debug:
+connectors:
+  spanmetrics:
+    namespace: span.metrics
+  count:
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [otlp, debug, spanmetrics]
+    metrics:
+      receivers: [spanmetrics, otlp]
+      exporters: [prometheus, prometheusremotewrite]
